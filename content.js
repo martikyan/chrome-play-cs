@@ -41,8 +41,40 @@ function BindKeys(triggerKey, sequenceStr, delayMs = 35) {
   return handler;
 }
 
+const USERNAME_STORAGE_KEY = 'play-cs-extension-username';
+
+let playerUsername = sessionStorage.getItem(USERNAME_STORAGE_KEY);
+
+function parseUsernameFromTopbarButton(button) {
+  const clone = button.cloneNode(true);
+  clone.querySelectorAll('i').forEach((icon) => icon.remove());
+  return clone.textContent.trim();
+}
+
+function setPlayerUsername(username) {
+  if (!username || username === playerUsername) return;
+  playerUsername = username;
+  sessionStorage.setItem(USERNAME_STORAGE_KEY, username);
+  console.log(`[CS Macro] Player username set to: "${username}"`);
+}
+
+function detectPlayerUsername() {
+  const button = document.querySelector('#topbar-user > button');
+  if (!button) return false;
+
+  const username = parseUsernameFromTopbarButton(button);
+  if (username) {
+    setPlayerUsername(username);
+    return true;
+  }
+  return false;
+}
+
 // Initialization logic
 console.log("CS Macro Extension Loaded");
+if (playerUsername) {
+  console.log(`[CS Macro] Restored player username from session: "${playerUsername}"`);
+}
 
 // Attempting to "Launch" (Note: This usually fails without a URI Scheme)
 console.log("Requesting Overlay Sight.app launch...");
@@ -98,7 +130,8 @@ function startObservingDeaths(deathFeedContainer) {
               const killerName = killerElement.textContent.trim();
               console.log(`[CS Macro] Found a killer: "${killerName}"`);
 
-              if (killerName.toLowerCase().includes('martikyan')) {                console.log("[CS Macro] TARGET MATCHED: martikyan! Attempting to play sound...");
+              if (playerUsername && killerName.toLowerCase().includes(playerUsername.toLowerCase())) {
+                console.log(`[CS Macro] TARGET MATCHED: ${playerUsername}! Attempting to play sound...`);
 
                 killSound.play().then(() => {
                   console.log("[CS Macro] Sound played successfully.");
@@ -147,6 +180,30 @@ const waitForDeathFeed = setInterval(() => {
   }
 }, 1000);
 
+// --- Player Username Detection ---
+console.log("[CS Macro] Initializing player username detection...");
+
+if (!detectPlayerUsername()) {
+  let usernameAttempts = 0;
+  const waitForTopbarUser = setInterval(() => {
+    usernameAttempts++;
+    if (detectPlayerUsername()) {
+      console.log(`[CS Macro] Found topbar username after ${usernameAttempts} attempt(s).`);
+      clearInterval(waitForTopbarUser);
+      return;
+    }
+
+    if (usernameAttempts % 5 === 0) {
+      console.log(`[CS Macro] Still looking for #topbar-user > button... (Attempt ${usernameAttempts})`);
+    }
+
+    if (usernameAttempts > 60) {
+      console.warn("[CS Macro] Timed out waiting for topbar username. Kill sound will not match until detected.");
+      clearInterval(waitForTopbarUser);
+    }
+  }, 1000);
+}
+
 // --- Center Screen Pointer (Crosshair) ---
 function createCenterPointer() {
   // 1. Create a master container for the crosshair
@@ -159,7 +216,7 @@ function createCenterPointer() {
   crosshairContainer.style.transform = 'translate(-50%, -50%)';
   crosshairContainer.style.zIndex = '999999'; 
   crosshairContainer.style.pointerEvents = 'none'; // Allows clicks to pass through
-  crosshairContainer.style.opacity = '0.8'; // NEW: 80% opacity
+  crosshairContainer.style.opacity = '0.9'; // 90% opacity
   
   // 2. Create the thin horizontal line
   const hLine = document.createElement('div');
@@ -167,8 +224,8 @@ function createCenterPointer() {
   hLine.style.top = '50%';
   hLine.style.left = '50%';
   hLine.style.transform = 'translate(-50%, -50%)';
-  hLine.style.width = '6px';  // NEW: Smaller length (was 12px)
-  hLine.style.height = '1px'; // NEW: Thinner (was 2px)
+  hLine.style.width = '6px';
+  hLine.style.height = '1px';
   hLine.style.backgroundColor = 'darkred'; 
   
   // 3. Create the thin vertical line
@@ -177,8 +234,8 @@ function createCenterPointer() {
   vLine.style.top = '50%';
   vLine.style.left = '50%';
   vLine.style.transform = 'translate(-50%, -50%)';
-  vLine.style.width = '1px';  // NEW: Thinner (was 2px)
-  vLine.style.height = '6px'; // NEW: Smaller length (was 12px)
+  vLine.style.width = '1px';
+  vLine.style.height = '6px';
   vLine.style.backgroundColor = 'darkred'; 
 
   // 4. Attach the lines to the container, and the container to the webpage
