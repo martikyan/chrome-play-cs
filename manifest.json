@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "CS Play Macro & Launcher",
+  "version": "3.0",
+  "description": "Binds keys for play-cs.com",
+  "content_scripts": [
+    {
+      "matches": ["*://*.play-cs.com/*", "*://*.cs-online.club/*"], 
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "permissions": ["activeTab"],
+  "web_accessible_resources": [
+    {
+      "resources": ["nintendo_switch.mp3"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
