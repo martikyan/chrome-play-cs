@@ -43,7 +43,7 @@ function BindKeys(triggerKey, sequenceStr, delayMs = 35) {
 
 const USERNAME_STORAGE_KEY = 'play-cs-extension-username';
 
-let playerUsername = sessionStorage.getItem(USERNAME_STORAGE_KEY);
+let playerUsername = null;
 
 function parseUsernameFromTopbarButton(button) {
   const clone = button.cloneNode(true);
@@ -54,7 +54,7 @@ function parseUsernameFromTopbarButton(button) {
 function setPlayerUsername(username) {
   if (!username || username === playerUsername) return;
   playerUsername = username;
-  sessionStorage.setItem(USERNAME_STORAGE_KEY, username);
+  chrome.storage.local.set({ [USERNAME_STORAGE_KEY]: username });
   console.log(`[CS Macro] Player username set to: "${username}"`);
 }
 
@@ -70,11 +70,22 @@ function detectPlayerUsername() {
   return false;
 }
 
+function loadStoredUsername() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(USERNAME_STORAGE_KEY, (result) => {
+      const username = result[USERNAME_STORAGE_KEY];
+      if (username) {
+        playerUsername = username;
+        console.log(`[CS Macro] Restored player username from storage: "${username}"`);
+      }
+      resolve(username ?? null);
+    });
+  });
+}
+
 // Initialization logic
 console.log("CS Macro Extension Loaded");
-if (playerUsername) {
-  console.log(`[CS Macro] Restored player username from session: "${playerUsername}"`);
-}
+loadStoredUsername();
 
 // Attempting to "Launch" (Note: This usually fails without a URI Scheme)
 console.log("Requesting Overlay Sight.app launch...");
