@@ -23,8 +23,9 @@ function getDefaultSettings() {
     pointerSize: DEFAULT_POINTER_SIZE,
     pointerThickness: DEFAULT_POINTER_THICKNESS,
     pointerColor: DEFAULT_POINTER_COLOR,
+    doubleSpace: false,
     bindings,
-    templates: [...BINDING_TEMPLATES] // Unified array containing all templates
+    templates: [...BINDING_TEMPLATES] 
   };
 }
 
@@ -66,7 +67,11 @@ function mergeSettings(stored) {
       ? stored.pointerColor
       : defaults.pointerColor;
 
-  return { pointerSize, pointerThickness, pointerColor, bindings, templates };
+      const doubleSpace = typeof stored.doubleSpace === 'boolean'
+      ? stored.doubleSpace
+      : defaults.doubleSpace;
+
+  return { pointerSize, pointerThickness, pointerColor, doubleSpace, bindings, templates };
 }
 
 function loadSettings() {

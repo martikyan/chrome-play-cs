@@ -3,6 +3,7 @@ const sizeVal = document.getElementById('size-val');
 const thicknessInput = document.getElementById('popup-thickness');
 const thicknessVal = document.getElementById('thickness-val');
 const colorInput = document.getElementById('popup-color');
+const doubleSpaceInput = document.getElementById('popup-double-space');
 const bindingsContainer = document.getElementById('bindings-container');
 
 const customNameInput = document.getElementById('custom-name');
@@ -71,6 +72,7 @@ async function initPopup() {
   thicknessVal.textContent = settings.pointerThickness;
 
   colorInput.value = settings.pointerColor;
+  doubleSpaceInput.checked = settings.doubleSpace || false;
 
   const updateSettings = async () => {
     const currentSettings = await loadSettings(); 
@@ -78,6 +80,7 @@ async function initPopup() {
     currentSettings.pointerSize = parseInt(sizeInput.value, 10);
     currentSettings.pointerThickness = parseInt(thicknessInput.value, 10);
     currentSettings.pointerColor = colorInput.value;
+    currentSettings.doubleSpace = doubleSpaceInput.checked;
 
     sizeVal.textContent = currentSettings.pointerSize;
     thicknessVal.textContent = currentSettings.pointerThickness;
@@ -88,6 +91,7 @@ async function initPopup() {
   sizeInput.addEventListener('input', updateSettings);
   thicknessInput.addEventListener('input', updateSettings);
   colorInput.addEventListener('input', updateSettings);
+  doubleSpaceInput.addEventListener('change', updateSettings);
 
   await renderBindings();
 
@@ -96,7 +100,7 @@ async function initPopup() {
     const sequence = customSequenceInput.value.trim();
     const trigger = customTriggerInput.value.trim();
 
-    if (!name || sequence == null || sequence == undefined) {
+    if (!name || !sequence) {
       alert('Please fill out both Name and Sequence.');
       return;
     }

@@ -45,6 +45,7 @@ const USERNAME_STORAGE_KEY = 'play-cs-extension-username';
 let playerUsername = null;
 const activeBindingHandlers = [];
 let crosshairContainer = null;
+let doubleSpaceEnabled = false;
 
 function clearBindings() {
   for (const handler of activeBindingHandlers) {
@@ -93,7 +94,8 @@ function applyPointerStyle(settings) {
 
 function applySettings(settings) {
   applyBindings(settings);
-  applyPointerStyle(settings); // Call the updated function here
+  applyPointerStyle(settings);
+  doubleSpaceEnabled = !!settings.doubleSpace;
 }
 
 // Inside createCenterPointer(), remove the hardcoded background colors since
@@ -316,3 +318,35 @@ function createCenterPointer() {
 
   console.log('[CS Macro] Center pointer injected.');
 }
+
+// Global Double Space Macro Coordinator
+document.addEventListener('keydown', async (e) => {
+  if (!doubleSpaceEnabled) return;
+
+  // CRITICAL: Stop programmatic events from causing an infinite recursion crash loop
+  if (!e.isTrusted) return; 
+
+  // Guard: Avoid triggering simulated macros while typing in standard text inputs/chatboxes
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  if (e.key === ' ' || e.code === 'Space') {
+    const el = document.activeElement || document.body;
+    const spaceEventData = {
+      key: ' ',            
+      code: 'Space',       
+      keyCode: 32,         
+      which: 32,           
+      bubbles: true,       
+      cancelable: true,    
+      composed: true       
+    };
+
+    console.log('Dispatching space')
+    // Safely dispatch macro commands directly onto target focus elements
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    await sleep(30);
+    el.dispatchEvent(new KeyboardEvent('keydown', spaceEventData));
+    el.dispatchEvent(new KeyboardEvent('keyup', spaceEventData));
+  }
+});
