@@ -5,10 +5,65 @@ const thicknessVal = document.getElementById('thickness-val');
 const colorInput = document.getElementById('popup-color');
 const bindingsContainer = document.getElementById('bindings-container');
 
+const customNameInput = document.getElementById('custom-name');
+const customSequenceInput = document.getElementById('custom-sequence');
+const customTriggerInput = document.getElementById('custom-trigger');
+const addBindingBtn = document.getElementById('add-binding-btn');
+
+async function renderBindings() {
+  bindingsContainer.innerHTML = '';
+  const settings = await loadSettings();
+
+  settings.templates.forEach(template => {
+    const group = document.createElement('div');
+    group.className = 'control-group';
+
+    const label = document.createElement('label');
+    label.textContent = template.name;
+
+    // Row wrapper for input and delete button
+    const row = document.createElement('div');
+    row.className = 'binding-row';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = settings.bindings[template.id] || '';
+    input.placeholder = 'No binding...';
+    
+    // Save key trigger updates on typing
+    input.addEventListener('input', async (e) => {
+      const currentSettings = await loadSettings();
+      currentSettings.bindings[template.id] = e.target.value;
+      await saveSettings(currentSettings);
+    });
+
+    // Delete Button
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-btn';
+    delBtn.textContent = 'X';
+    delBtn.title = 'Delete this binding';
+    
+    delBtn.addEventListener('click', async () => {
+      const currentSettings = await loadSettings();
+      // Remove from the templates array
+      currentSettings.templates = currentSettings.templates.filter(t => t.id !== template.id);
+      // Remove from bindings dictionary
+      delete currentSettings.bindings[template.id];
+      await saveSettings(currentSettings);
+      await renderBindings();
+    });
+
+    row.appendChild(input);
+    row.appendChild(delBtn);
+    group.appendChild(label);
+    group.appendChild(row);
+    bindingsContainer.appendChild(group);
+  });
+}
+
 async function initPopup() {
   const settings = await loadSettings();
 
-  // Populate initial values
   sizeInput.value = settings.pointerSize;
   sizeVal.textContent = settings.pointerSize;
 
@@ -17,9 +72,7 @@ async function initPopup() {
 
   colorInput.value = settings.pointerColor;
 
-  // Function to save new crosshair values
   const updateSettings = async () => {
-    // Reload settings first so we don't overwrite buy-binds that just changed
     const currentSettings = await loadSettings(); 
     
     currentSettings.pointerSize = parseInt(sizeInput.value, 10);
@@ -32,34 +85,40 @@ async function initPopup() {
     await saveSettings(currentSettings);
   };
 
-  // Add event listeners for real-time updates on crosshair
   sizeInput.addEventListener('input', updateSettings);
   thicknessInput.addEventListener('input', updateSettings);
   colorInput.addEventListener('input', updateSettings);
 
-  // Dynamically generate binding inputs
-  BINDING_TEMPLATES.forEach(template => {
-    const group = document.createElement('div');
-    group.className = 'control-group';
+  await renderBindings();
 
-    const label = document.createElement('label');
-    label.textContent = template.name;
+  addBindingBtn.addEventListener('click', async () => {
+    const name = customNameInput.value.trim();
+    const sequence = customSequenceInput.value.trim();
+    const trigger = customTriggerInput.value.trim();
 
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = settings.bindings[template.id] || '';
-    input.placeholder = 'No binding...';
-    
-    // Save binding on input
-    input.addEventListener('input', async (e) => {
-      const currentSettings = await loadSettings();
-      currentSettings.bindings[template.id] = e.target.value;
-      await saveSettings(currentSettings);
+    if (!name || sequence == null || sequence == undefined) {
+      alert('Please fill out both Name and Sequence.');
+      return;
+    }
+
+    const currentSettings = await loadSettings();
+    const uniqueId = 'custom_' + Date.now();
+
+    currentSettings.templates.push({
+      id: uniqueId,
+      name: name,
+      sequence: sequence
     });
 
-    group.appendChild(label);
-    group.appendChild(input);
-    bindingsContainer.appendChild(group);
+    currentSettings.bindings[uniqueId] = trigger;
+
+    await saveSettings(currentSettings);
+
+    customNameInput.value = '';
+    customSequenceInput.value = '';
+    customTriggerInput.value = '';
+
+    await renderBindings();
   });
 }
 

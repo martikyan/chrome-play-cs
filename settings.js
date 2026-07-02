@@ -2,45 +2,16 @@ const SETTINGS_STORAGE_KEY = 'play-cs-extension-settings';
 
 const DEFAULT_POINTER_SIZE = 6;
 const DEFAULT_POINTER_THICKNESS = 1;
-const DEFAULT_POINTER_COLOR = '#8b0000'; // darkred
+const DEFAULT_POINTER_COLOR = '#8b0000';
 
+// These serve as the baseline templates for first-time loads
 const BINDING_TEMPLATES = [
-  {
-    id: 'b43b62b64',
-    name: 'Counter Terrorist Standard',
-    sequence: 'b43b62b64',
-    defaultKeys: '9',
-  },
-  {
-    id: 'b42b62b64',
-    name: 'Terrorist Standard',
-    sequence: 'b42b62b64',
-    defaultKeys: '0',
-  },
-  {
-    id: 'b14b62b64',
-    name: 'Deagle template',
-    sequence: 'b14b62b64',
-    defaultKeys: '=',
-  },
-  {
-    id: 'b32b62b64b65',
-    name: 'Quick template',
-    sequence: 'b32b62b64b65',
-    defaultKeys: '-',
-  },
-  {
-    id: 'b64\\\\4',
-    name: 'Grenade only',
-    sequence: 'b64\\\\4',
-    defaultKeys: '>',
-  },
-  {
-    id: 'b7b8',
-    name: 'Protection only',
-    sequence: 'b7b8',
-    defaultKeys: ']',
-  },
+  { id: 'b43b62b64', name: 'Counter Terrorist Standard', sequence: 'b43b62b64', defaultKeys: '9' },
+  { id: 'b42b62b64', name: 'Terrorist Standard', sequence: 'b42b62b64', defaultKeys: '0' },
+  { id: 'b14b62b64', name: 'Deagle template', sequence: 'b14b62b64', defaultKeys: '=' },
+  { id: 'b32b62b64b65', name: 'Quick template', sequence: 'b32b62b64b65', defaultKeys: '-' },
+  { id: 'b64\\\\4', name: 'Grenade only', sequence: 'b64\\\\4', defaultKeys: '>' },
+  { id: 'b7b8', name: 'Protection only', sequence: 'b7b8', defaultKeys: ']' },
 ];
 
 function getDefaultSettings() {
@@ -53,6 +24,7 @@ function getDefaultSettings() {
     pointerThickness: DEFAULT_POINTER_THICKNESS,
     pointerColor: DEFAULT_POINTER_COLOR,
     bindings,
+    templates: [...BINDING_TEMPLATES] // Unified array containing all templates
   };
 }
 
@@ -64,11 +36,20 @@ function mergeSettings(stored) {
   const defaults = getDefaultSettings();
   if (!stored) return defaults;
 
-  const bindings = { ...defaults.bindings };
+  // Migration & Fallback: Ensure templates is always an array
+  let templates = stored.templates;
+  if (!Array.isArray(templates)) {
+    const legacyCustom = Array.isArray(stored.customTemplates) ? stored.customTemplates : [];
+    templates = [...BINDING_TEMPLATES, ...legacyCustom];
+  }
+
+  const bindings = {};
   if (stored.bindings) {
-    for (const template of BINDING_TEMPLATES) {
+    for (const template of templates) {
       if (typeof stored.bindings[template.id] === 'string') {
         bindings[template.id] = stored.bindings[template.id];
+      } else {
+        bindings[template.id] = ''; 
       }
     }
   }
@@ -85,7 +66,7 @@ function mergeSettings(stored) {
       ? stored.pointerColor
       : defaults.pointerColor;
 
-  return { pointerSize, pointerThickness, pointerColor, bindings };
+  return { pointerSize, pointerThickness, pointerColor, bindings, templates };
 }
 
 function loadSettings() {

@@ -56,7 +56,9 @@ function clearBindings() {
 function applyBindings(settings) {
   clearBindings();
 
-  for (const template of BINDING_TEMPLATES) {
+  const templates = settings.templates || [];
+
+  for (const template of templates) {
     const keys = splitCharacters(settings.bindings[template.id]);
     for (const key of keys) {
       if (key) {
