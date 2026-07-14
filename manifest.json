@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CS Play Macro & Launcher",
-  "version": "6.0.1",
+  "version": "1.0.0",
   "description": "Binds keys for play-cs.com",
   "action": {
     "default_popup": "popup.html"

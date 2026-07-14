@@ -6,6 +6,13 @@ const colorInput = document.getElementById('popup-color');
 const doubleSpaceInput = document.getElementById('popup-double-space');
 const bindingsContainer = document.getElementById('bindings-container');
 
+const brightnessInput = document.getElementById('popup-brightness');
+const brightnessVal = document.getElementById('brightness-val');
+const contrastInput = document.getElementById('popup-contrast');
+const contrastVal = document.getElementById('contrast-val');
+const saturationInput = document.getElementById('popup-saturation');
+const saturationVal = document.getElementById('saturation-val');
+
 const customNameInput = document.getElementById('custom-name');
 const customSequenceInput = document.getElementById('custom-sequence');
 const customTriggerInput = document.getElementById('custom-trigger');
@@ -74,6 +81,15 @@ async function initPopup() {
   colorInput.value = settings.pointerColor;
   doubleSpaceInput.checked = settings.doubleSpace || false;
 
+  brightnessInput.value = settings.brightness;
+  brightnessVal.textContent = settings.brightness;
+  
+  contrastInput.value = settings.contrast;
+  contrastVal.textContent = settings.contrast;
+  
+  saturationInput.value = settings.saturation;
+  saturationVal.textContent = settings.saturation;
+
   const updateSettings = async () => {
     const currentSettings = await loadSettings(); 
     
@@ -81,9 +97,16 @@ async function initPopup() {
     currentSettings.pointerThickness = parseInt(thicknessInput.value, 10);
     currentSettings.pointerColor = colorInput.value;
     currentSettings.doubleSpace = doubleSpaceInput.checked;
+    
+    currentSettings.brightness = parseInt(brightnessInput.value, 10);
+    currentSettings.contrast = parseInt(contrastInput.value, 10);
+    currentSettings.saturation = parseInt(saturationInput.value, 10);
 
     sizeVal.textContent = currentSettings.pointerSize;
     thicknessVal.textContent = currentSettings.pointerThickness;
+    brightnessVal.textContent = currentSettings.brightness;
+    contrastVal.textContent = currentSettings.contrast;
+    saturationVal.textContent = currentSettings.saturation;
 
     await saveSettings(currentSettings);
   };
@@ -92,6 +115,10 @@ async function initPopup() {
   thicknessInput.addEventListener('input', updateSettings);
   colorInput.addEventListener('input', updateSettings);
   doubleSpaceInput.addEventListener('change', updateSettings);
+  
+  brightnessInput.addEventListener('input', updateSettings);
+  contrastInput.addEventListener('input', updateSettings);
+  saturationInput.addEventListener('input', updateSettings);
 
   await renderBindings();
 

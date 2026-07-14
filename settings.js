@@ -3,6 +3,9 @@ const SETTINGS_STORAGE_KEY = 'play-cs-extension-settings';
 const DEFAULT_POINTER_SIZE = 6;
 const DEFAULT_POINTER_THICKNESS = 1;
 const DEFAULT_POINTER_COLOR = '#8b0000';
+const DEFAULT_BRIGHTNESS = 100;
+const DEFAULT_CONTRAST = 100;
+const DEFAULT_SATURATION = 100;
 
 // These serve as the baseline templates for first-time loads
 const BINDING_TEMPLATES = [
@@ -23,6 +26,9 @@ function getDefaultSettings() {
     pointerSize: DEFAULT_POINTER_SIZE,
     pointerThickness: DEFAULT_POINTER_THICKNESS,
     pointerColor: DEFAULT_POINTER_COLOR,
+    brightness: DEFAULT_BRIGHTNESS,
+    contrast: DEFAULT_CONTRAST,
+    saturation: DEFAULT_SATURATION,
     doubleSpace: false,
     bindings,
     templates: [...BINDING_TEMPLATES] 
@@ -67,11 +73,23 @@ function mergeSettings(stored) {
       ? stored.pointerColor
       : defaults.pointerColor;
 
-      const doubleSpace = typeof stored.doubleSpace === 'boolean'
+  const brightness = typeof stored.brightness === 'number' 
+      ? stored.brightness 
+      : defaults.brightness;
+
+  const contrast = typeof stored.contrast === 'number' 
+      ? stored.contrast 
+      : defaults.contrast;
+
+  const saturation = typeof stored.saturation === 'number' 
+      ? stored.saturation 
+      : defaults.saturation;
+
+  const doubleSpace = typeof stored.doubleSpace === 'boolean'
       ? stored.doubleSpace
       : defaults.doubleSpace;
 
-  return { pointerSize, pointerThickness, pointerColor, doubleSpace, bindings, templates };
+  return { pointerSize, pointerThickness, pointerColor, brightness, contrast, saturation, doubleSpace, bindings, templates };
 }
 
 function loadSettings() {

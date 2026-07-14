@@ -71,7 +71,6 @@ function applyBindings(settings) {
   console.log(`[CS Macro] Applied ${activeBindingHandlers.length} key binding(s).`);
 }
 
-// Replace applyPointerSize with applyPointerStyle
 function applyPointerStyle(settings) {
   if (!crosshairContainer) return;
 
@@ -92,14 +91,20 @@ function applyPointerStyle(settings) {
   vLine.style.backgroundColor = settings.pointerColor;
 }
 
+function applyDisplayFilters(settings) {
+  const filterString = `brightness(${settings.brightness}%) contrast(${settings.contrast}%) saturate(${settings.saturation}%)`;
+  document.querySelectorAll('canvas, body, html').forEach(el => {
+    el.style.setProperty('filter', filterString, 'important');
+  });
+}
+
 function applySettings(settings) {
   applyBindings(settings);
   applyPointerStyle(settings);
+  applyDisplayFilters(settings);
   doubleSpaceEnabled = !!settings.doubleSpace;
 }
 
-// Inside createCenterPointer(), remove the hardcoded background colors since
-// applySettings() will now inject the user's custom color immediately upon loading.
 function createCenterPointer() {
   crosshairContainer = document.createElement('div');
 
@@ -281,42 +286,6 @@ if (!detectPlayerUsername()) {
       clearInterval(waitForTopbarUser);
     }
   }, 1000);
-}
-
-function createCenterPointer() {
-  crosshairContainer = document.createElement('div');
-
-  crosshairContainer.style.position = 'fixed';
-  crosshairContainer.style.top = '50%';
-  crosshairContainer.style.left = '50%';
-  crosshairContainer.style.transform = 'translate(-50%, -50%)';
-  crosshairContainer.style.zIndex = '999999';
-  crosshairContainer.style.pointerEvents = 'none';
-  crosshairContainer.style.opacity = '0.9';
-
-  const hLine = document.createElement('div');
-  hLine.dataset.crosshair = 'h';
-  hLine.style.position = 'absolute';
-  hLine.style.top = '50%';
-  hLine.style.left = '50%';
-  hLine.style.transform = 'translate(-50%, -50%)';
-  hLine.style.height = '1px';
-  hLine.style.backgroundColor = 'darkred';
-
-  const vLine = document.createElement('div');
-  vLine.dataset.crosshair = 'v';
-  vLine.style.position = 'absolute';
-  vLine.style.top = '50%';
-  vLine.style.left = '50%';
-  vLine.style.transform = 'translate(-50%, -50%)';
-  vLine.style.width = '1px';
-  vLine.style.backgroundColor = 'darkred';
-
-  crosshairContainer.appendChild(hLine);
-  crosshairContainer.appendChild(vLine);
-  document.body.appendChild(crosshairContainer);
-
-  console.log('[CS Macro] Center pointer injected.');
 }
 
 // Global Double Space Macro Coordinator
