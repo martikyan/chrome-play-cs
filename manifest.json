@@ -1,14 +1,20 @@
 {
   "manifest_version": 3,
   "name": "CS Play Macro & Launcher",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Binds keys for play-cs.com",
   "action": {
     "default_popup": "popup.html"
   },
   "content_scripts": [
     {
-      "matches": ["*://*.play-cs.com/*", "*://*.cs-online.club/*"], 
+      "matches": ["*://*.play-cs.com/*", "*://*.cs-online.club/*"],
+      "js": ["model-overrides.js", "asset-inject.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": ["*://*.play-cs.com/*", "*://*.cs-online.club/*"],
       "js": ["settings.js", "content.js"],
       "run_at": "document_idle",
       "all_frames": true
@@ -17,8 +23,20 @@
   "permissions": ["activeTab", "storage"],
   "web_accessible_resources": [
     {
-      "resources": ["nintendo_switch.mp3"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "nintendo_switch.mp3",
+        "asset-inject-page.js",
+        "models/cstrike/models/player/arctic/arctic.mdl",
+        "models/cstrike/models/player/gign/gign.mdl",
+        "models/cstrike/models/player/gsg9/gsg9.mdl",
+        "models/cstrike/models/player/guerilla/guerilla.mdl",
+        "models/cstrike/models/player/leet/leet.mdl",
+        "models/cstrike/models/player/sas/sas.mdl",
+        "models/cstrike/models/player/terror/terror.mdl",
+        "models/cstrike/models/player/urban/urban.mdl",
+        "models/cstrike/models/player/vip/vip.mdl"
+      ],
+      "matches": ["*://*.play-cs.com/*", "*://*.cs-online.club/*"]
     }
   ]
 }

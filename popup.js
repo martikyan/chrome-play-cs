@@ -4,6 +4,7 @@ const thicknessInput = document.getElementById('popup-thickness');
 const thicknessVal = document.getElementById('thickness-val');
 const colorInput = document.getElementById('popup-color');
 const doubleSpaceInput = document.getElementById('popup-double-space');
+const fpsModelsInput = document.getElementById('popup-custom-models');
 const bindingsContainer = document.getElementById('bindings-container');
 
 const brightnessInput = document.getElementById('popup-brightness');
@@ -80,6 +81,7 @@ async function initPopup() {
 
   colorInput.value = settings.pointerColor;
   doubleSpaceInput.checked = settings.doubleSpace || false;
+  fpsModelsInput.checked = settings.customModels || false;
 
   brightnessInput.value = settings.brightness;
   brightnessVal.textContent = settings.brightness;
@@ -97,6 +99,7 @@ async function initPopup() {
     currentSettings.pointerThickness = parseInt(thicknessInput.value, 10);
     currentSettings.pointerColor = colorInput.value;
     currentSettings.doubleSpace = doubleSpaceInput.checked;
+    currentSettings.customModels = fpsModelsInput.checked;
     
     currentSettings.brightness = parseInt(brightnessInput.value, 10);
     currentSettings.contrast = parseInt(contrastInput.value, 10);
@@ -115,6 +118,7 @@ async function initPopup() {
   thicknessInput.addEventListener('input', updateSettings);
   colorInput.addEventListener('input', updateSettings);
   doubleSpaceInput.addEventListener('change', updateSettings);
+  fpsModelsInput.addEventListener('change', updateSettings);
   
   brightnessInput.addEventListener('input', updateSettings);
   contrastInput.addEventListener('input', updateSettings);

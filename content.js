@@ -46,6 +46,7 @@ let playerUsername = null;
 const activeBindingHandlers = [];
 let crosshairContainer = null;
 let doubleSpaceEnabled = false;
+let customModelsEnabled = false;
 
 function clearBindings() {
   for (const handler of activeBindingHandlers) {
@@ -103,6 +104,7 @@ function applySettings(settings) {
   applyPointerStyle(settings);
   applyDisplayFilters(settings);
   doubleSpaceEnabled = !!settings.doubleSpace;
+  customModelsEnabled = !!settings.customModels;
 }
 
 function createCenterPointer() {

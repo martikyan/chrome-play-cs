@@ -30,6 +30,7 @@ function getDefaultSettings() {
     contrast: DEFAULT_CONTRAST,
     saturation: DEFAULT_SATURATION,
     doubleSpace: false,
+    customModels: false,
     bindings,
     templates: [...BINDING_TEMPLATES] 
   };
@@ -89,7 +90,11 @@ function mergeSettings(stored) {
       ? stored.doubleSpace
       : defaults.doubleSpace;
 
-  return { pointerSize, pointerThickness, pointerColor, brightness, contrast, saturation, doubleSpace, bindings, templates };
+  const customModels = typeof stored.customModels === 'boolean'
+      ? stored.customModels
+      : defaults.customModels;
+
+  return { pointerSize, pointerThickness, pointerColor, brightness, contrast, saturation, doubleSpace, customModels, bindings, templates };
 }
 
 function loadSettings() {
