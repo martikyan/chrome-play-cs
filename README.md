@@ -8,3 +8,5 @@ A Chrome browser extension, that adds features to the game in at play-cs.com
 - Shortcuts to buy weapons quickly (keyboard structure may differ for others, this needs to be fixed as well)
 
 You can always clone, modify the extension to have the features fine tuned for you.
+
+Credits to [DHunterZ on downloading-cs.su](https://downloading-cs.su/) for the custom models.
