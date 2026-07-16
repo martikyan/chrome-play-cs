@@ -93,6 +93,12 @@ function applyPointerStyle(settings) {
 }
 
 function applyDisplayFilters(settings) {
+  if (settings.brightness === 100 && settings.contrast === 100 && settings.saturation === 100) {
+    console.log('[CS Macro] No display filters applied (default settings). Restart required to fully reset.');
+    return;
+  }
+
+  console.log(`[CS Macro] Applying display filters: Brightness=${settings.brightness}%, Contrast=${settings.contrast}%, Saturation=${settings.saturation}%`);
   const filterString = `brightness(${settings.brightness}%) contrast(${settings.contrast}%) saturate(${settings.saturation}%)`;
   document.querySelectorAll('canvas, body, html').forEach(el => {
     el.style.setProperty('filter', filterString, 'important');
