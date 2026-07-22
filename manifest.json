@@ -9,6 +9,13 @@
   "content_scripts": [
     {
       "matches": ["*://*.play-cs.com/*", "*://*.cs-online.club/*"],
+      "js": ["sound-control-page.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": ["*://*.play-cs.com/*", "*://*.cs-online.club/*"],
       "js": ["model-overrides.js", "asset-inject.js"],
       "run_at": "document_start",
       "all_frames": true

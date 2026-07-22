@@ -13,6 +13,8 @@ const contrastInput = document.getElementById('popup-contrast');
 const contrastVal = document.getElementById('contrast-val');
 const saturationInput = document.getElementById('popup-saturation');
 const saturationVal = document.getElementById('saturation-val');
+const soundWhenNotPlayingInput = document.getElementById('popup-sound-when-not-playing');
+const soundWhenNotPlayingVal = document.getElementById('sound-when-not-playing-val');
 
 const customNameInput = document.getElementById('custom-name');
 const customSequenceInput = document.getElementById('custom-sequence');
@@ -92,6 +94,9 @@ async function initPopup() {
   saturationInput.value = settings.saturation;
   saturationVal.textContent = settings.saturation;
 
+  soundWhenNotPlayingInput.value = settings.soundWhenNotPlaying;
+  soundWhenNotPlayingVal.textContent = settings.soundWhenNotPlaying;
+
   const updateSettings = async () => {
     const currentSettings = await loadSettings(); 
     
@@ -104,12 +109,14 @@ async function initPopup() {
     currentSettings.brightness = parseInt(brightnessInput.value, 10);
     currentSettings.contrast = parseInt(contrastInput.value, 10);
     currentSettings.saturation = parseInt(saturationInput.value, 10);
+    currentSettings.soundWhenNotPlaying = parseInt(soundWhenNotPlayingInput.value, 10);
 
     sizeVal.textContent = currentSettings.pointerSize;
     thicknessVal.textContent = currentSettings.pointerThickness;
     brightnessVal.textContent = currentSettings.brightness;
     contrastVal.textContent = currentSettings.contrast;
     saturationVal.textContent = currentSettings.saturation;
+    soundWhenNotPlayingVal.textContent = currentSettings.soundWhenNotPlaying;
 
     await saveSettings(currentSettings);
   };
@@ -123,6 +130,7 @@ async function initPopup() {
   brightnessInput.addEventListener('input', updateSettings);
   contrastInput.addEventListener('input', updateSettings);
   saturationInput.addEventListener('input', updateSettings);
+  soundWhenNotPlayingInput.addEventListener('input', updateSettings);
 
   await renderBindings();
 

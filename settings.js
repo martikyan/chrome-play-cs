@@ -6,6 +6,7 @@ const DEFAULT_POINTER_COLOR = '#8b0000';
 const DEFAULT_BRIGHTNESS = 100;
 const DEFAULT_CONTRAST = 100;
 const DEFAULT_SATURATION = 100;
+const DEFAULT_SOUND_WHEN_NOT_PLAYING = 100;
 
 // These serve as the baseline templates for first-time loads
 const BINDING_TEMPLATES = [
@@ -29,6 +30,7 @@ function getDefaultSettings() {
     brightness: DEFAULT_BRIGHTNESS,
     contrast: DEFAULT_CONTRAST,
     saturation: DEFAULT_SATURATION,
+    soundWhenNotPlaying: DEFAULT_SOUND_WHEN_NOT_PLAYING,
     doubleSpace: false,
     customModels: false,
     bindings,
@@ -86,6 +88,11 @@ function mergeSettings(stored) {
       ? stored.saturation 
       : defaults.saturation;
 
+  const soundWhenNotPlaying = typeof stored.soundWhenNotPlaying === 'number' &&
+      stored.soundWhenNotPlaying >= 0 && stored.soundWhenNotPlaying <= 100
+      ? stored.soundWhenNotPlaying
+      : defaults.soundWhenNotPlaying;
+
   const doubleSpace = typeof stored.doubleSpace === 'boolean'
       ? stored.doubleSpace
       : defaults.doubleSpace;
@@ -94,7 +101,7 @@ function mergeSettings(stored) {
       ? stored.customModels
       : defaults.customModels;
 
-  return { pointerSize, pointerThickness, pointerColor, brightness, contrast, saturation, doubleSpace, customModels, bindings, templates };
+  return { pointerSize, pointerThickness, pointerColor, brightness, contrast, saturation, soundWhenNotPlaying, doubleSpace, customModels, bindings, templates };
 }
 
 function loadSettings() {

@@ -47,6 +47,15 @@ const activeBindingHandlers = [];
 let crosshairContainer = null;
 let doubleSpaceEnabled = false;
 let customModelsEnabled = false;
+let soundWhenNotPlaying = 100;
+let appliedGameSoundVolume = null;
+let gameAudioAvailableSince = null;
+let gameSoundControlEnabled = false;
+
+const GAME_AUDIO_READY_DELAY_MS = 1000;
+const GAME_SOUND_ENABLED_ATTRIBUTE = 'data-cs-macro-game-sound-enabled';
+const GAME_SOUND_VOLUME_ATTRIBUTE = 'data-cs-macro-game-sound-volume';
+const GAME_SOUND_VOLUME_EVENT = '__csMacroGameSoundVolumeChanged';
 
 function clearBindings() {
   for (const handler of activeBindingHandlers) {
@@ -111,6 +120,8 @@ function applySettings(settings) {
   applyDisplayFilters(settings);
   doubleSpaceEnabled = !!settings.doubleSpace;
   customModelsEnabled = !!settings.customModels;
+  soundWhenNotPlaying = settings.soundWhenNotPlaying;
+  updateGameSoundVolume();
 }
 
 function createCenterPointer() {
@@ -204,6 +215,81 @@ console.log('[CS Macro] Initializing Death Feed Audio Monitor...');
 const soundUrl = chrome.runtime.getURL('nintendo_switch.mp3');
 console.log('[CS Macro] Sound URL resolved to:', soundUrl);
 const killSound = new Audio(soundUrl);
+
+function isPlaying() {
+  const healthElements = document.querySelectorAll(
+    '.hud-health, #hud-health, .player-health, #player-health'
+  );
+
+  return [...healthElements].some((element) => {
+    const style = getComputedStyle(element);
+    const isVisible = style.display !== 'none' &&
+      style.visibility !== 'hidden' &&
+      Number(style.opacity) !== 0 &&
+      element.getClientRects().length > 0;
+    const healthMatch = element.textContent.match(/-?\d+/);
+
+    return isVisible && healthMatch !== null && Number(healthMatch[0]) > 0;
+  });
+}
+
+function isGameAvailable() {
+  const hudContainer = document.querySelector('.hud-container');
+  const healthElement = document.querySelector(
+    '.hud-health, #hud-health, .player-health, #player-health'
+  );
+
+  if (!hudContainer || !healthElement) return false;
+
+  const style = getComputedStyle(hudContainer);
+  return style.display !== 'none' &&
+    style.visibility !== 'hidden' &&
+    Number(style.opacity) !== 0 &&
+    hudContainer.getClientRects().length > 0;
+}
+
+function publishGameSoundState(enabled, volumePercent) {
+  document.documentElement.setAttribute(
+    GAME_SOUND_ENABLED_ATTRIBUTE,
+    String(enabled)
+  );
+  document.documentElement.setAttribute(
+    GAME_SOUND_VOLUME_ATTRIBUTE,
+    String(volumePercent)
+  );
+  document.dispatchEvent(new Event(GAME_SOUND_VOLUME_EVENT));
+}
+
+function updateGameSoundVolume() {
+  if (!isGameAvailable()) {
+    gameAudioAvailableSince = null;
+
+    if (gameSoundControlEnabled) {
+      gameSoundControlEnabled = false;
+      appliedGameSoundVolume = null;
+      publishGameSoundState(false, 100);
+      console.log('[CS Macro] Game unavailable; game sound control disabled.');
+    }
+    return;
+  }
+
+  if (gameAudioAvailableSince === null) {
+    gameAudioAvailableSince = Date.now();
+    return;
+  }
+
+  if (Date.now() - gameAudioAvailableSince < GAME_AUDIO_READY_DELAY_MS) return;
+
+  const volumePercent = isPlaying() ? 100 : soundWhenNotPlaying;
+  if (gameSoundControlEnabled && volumePercent === appliedGameSoundVolume) return;
+
+  gameSoundControlEnabled = true;
+  appliedGameSoundVolume = volumePercent;
+  publishGameSoundState(true, volumePercent);
+  console.log(`[CS Macro] Game sound volume set to ${volumePercent}%.`);
+}
+
+setInterval(updateGameSoundVolume, 250);
 
 function startObservingDeaths(deathFeedContainer) {
   console.log('[CS Macro] Observer started on container:', deathFeedContainer);
