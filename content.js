@@ -130,6 +130,9 @@ function applySettings(settings) {
 function createCenterPointer() {
   crosshairContainer = document.createElement('div');
 
+  // Keep the pointer hidden until the game HUD is actually available. The
+  // content script also runs on the site's lobby and other non-game pages.
+  crosshairContainer.style.display = 'none';
   crosshairContainer.style.position = 'fixed';
   crosshairContainer.style.top = '50%';
   crosshairContainer.style.left = '50%';
@@ -251,6 +254,15 @@ function isGameAvailable() {
     hudContainer.getClientRects().length > 0;
 }
 
+function updateCrosshairVisibility(gameAvailable) {
+  if (!crosshairContainer) return;
+
+  const display = gameAvailable ? 'block' : 'none';
+  if (crosshairContainer.style.display === display) return;
+
+  crosshairContainer.style.display = display;
+}
+
 function publishGameSoundState(enabled, volumePercent) {
   document.documentElement.setAttribute(
     GAME_SOUND_ENABLED_ATTRIBUTE,
@@ -264,7 +276,10 @@ function publishGameSoundState(enabled, volumePercent) {
 }
 
 function updateGameSoundVolume() {
-  if (!isGameAvailable()) {
+  const gameAvailable = isGameAvailable();
+  updateCrosshairVisibility(gameAvailable);
+
+  if (!gameAvailable) {
     gameAudioAvailableSince = null;
     notPlayingSince = null;
     clearTimeout(soundLowerTimer);
