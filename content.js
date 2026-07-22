@@ -51,8 +51,11 @@ let soundWhenNotPlaying = 100;
 let appliedGameSoundVolume = null;
 let gameAudioAvailableSince = null;
 let gameSoundControlEnabled = false;
+let notPlayingSince = null;
+let soundLowerTimer = null;
 
 const GAME_AUDIO_READY_DELAY_MS = 1000;
+const SOUND_LOWER_DELAY_MS = 2000;
 const GAME_SOUND_ENABLED_ATTRIBUTE = 'data-cs-macro-game-sound-enabled';
 const GAME_SOUND_VOLUME_ATTRIBUTE = 'data-cs-macro-game-sound-volume';
 const GAME_SOUND_VOLUME_EVENT = '__csMacroGameSoundVolumeChanged';
@@ -263,6 +266,9 @@ function publishGameSoundState(enabled, volumePercent) {
 function updateGameSoundVolume() {
   if (!isGameAvailable()) {
     gameAudioAvailableSince = null;
+    notPlayingSince = null;
+    clearTimeout(soundLowerTimer);
+    soundLowerTimer = null;
 
     if (gameSoundControlEnabled) {
       gameSoundControlEnabled = false;
@@ -280,7 +286,26 @@ function updateGameSoundVolume() {
 
   if (Date.now() - gameAudioAvailableSince < GAME_AUDIO_READY_DELAY_MS) return;
 
-  const volumePercent = isPlaying() ? 100 : soundWhenNotPlaying;
+  const playing = isPlaying();
+  if (playing) {
+    notPlayingSince = null;
+    clearTimeout(soundLowerTimer);
+    soundLowerTimer = null;
+  } else if (notPlayingSince === null) {
+    notPlayingSince = Date.now();
+    soundLowerTimer = setTimeout(() => {
+      soundLowerTimer = null;
+      updateGameSoundVolume();
+    }, SOUND_LOWER_DELAY_MS);
+    return;
+  } else if (Date.now() - notPlayingSince < SOUND_LOWER_DELAY_MS) {
+    return;
+  } else {
+    clearTimeout(soundLowerTimer);
+    soundLowerTimer = null;
+  }
+
+  const volumePercent = playing ? 100 : soundWhenNotPlaying;
   if (gameSoundControlEnabled && volumePercent === appliedGameSoundVolume) return;
 
   gameSoundControlEnabled = true;
