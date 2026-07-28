@@ -1,18 +1,24 @@
 (function () {
-  const LOG = '[CS Macro][Inject Models]';
+  const LOG = '[CS Macro][Inject Assets]';
   const CONFIG_ID = '__cs_ext_model_config__';
-  const SETTINGS_KEY='play-cs-extension-settings'
+  const SETTINGS_KEY = 'play-cs-extension-settings';
+  const DISTRACTING_SOUNDS_ATTRIBUTE = 'data-cs-ext-disable-distracting-sounds';
+  let injectionStarted = false;
 
   /** Runs synchronously in page context before any async script load. */
   const SYNC_BOOTSTRAP = `
 (function () {
-  var LOG = '[CS Macro][Inject Models]';
+  var LOG = '[CS Macro][Inject Assets]';
+  var DISTRACTING_SOUNDS_ATTRIBUTE = 'data-cs-ext-disable-distracting-sounds';
+  var DISTRACTING_SOUND_PATH = /(?:^|\\/)rodir\\/valve\\/misc\\/[^/]+\\.wav$/i;
   if (window.__csExtSyncBootstrap) return;
   window.__csExtSyncBootstrap = true;
 
   console.log(LOG + ' Sync bootstrap running on ' + location.href);
 
   window.__csExtOverrides = window.__csExtOverrides || new Map();
+  window.__csExtDistractingSoundReplacement =
+    window.__csExtDistractingSoundReplacement || null;
   window.__csExtHookStats = { getItem: 0, getItemHit: 0, xhr: 0, xhrHit: 0, fs: 0, fsHit: 0 };
 
   function normalizePath(value) {
@@ -39,6 +45,15 @@
 
     if (path.endsWith('.pict')) {
       path = path.slice(0, -5);
+    }
+
+    if (
+      document.documentElement &&
+      document.documentElement.getAttribute(DISTRACTING_SOUNDS_ATTRIBUTE) === 'true' &&
+      DISTRACTING_SOUND_PATH.test(path) &&
+      window.__csExtDistractingSoundReplacement
+    ) {
+      return window.__csExtDistractingSoundReplacement;
     }
 
     var overrides = window.__csExtOverrides;
@@ -138,20 +153,33 @@
 })();
 `;
 
-  function injectPageScript() {
-    if (document.getElementById('__cs_ext_page_script__')) {
+  function setDistractingSoundsDisabled(disabled) {
+    if (!document.documentElement) return;
+    document.documentElement.setAttribute(
+      DISTRACTING_SOUNDS_ATTRIBUTE,
+      String(disabled)
+    );
+  }
+
+  function injectPageScript(customModelsEnabled, disableDistractingSounds) {
+    if (injectionStarted) {
       console.log(`${LOG} Page script already injected, skipping.`);
       return;
     }
+    injectionStarted = true;
+    setDistractingSoundsDisabled(disableDistractingSounds);
 
-    const manifest = buildModelOverrideManifest();
+    const manifest = customModelsEnabled ? buildModelOverrideManifest() : {};
     const urls = {};
 
     for (const [gameKey, extensionPath] of Object.entries(manifest)) {
       urls[gameKey] = chrome.runtime.getURL(extensionPath);
     }
 
-    console.log(`${LOG} Content script injecting ${Object.keys(urls).length} model override(s) on ${location.href}`);
+    console.log(
+      `${LOG} Content script injecting ${Object.keys(urls).length} model override(s) ` +
+      `and distracting-sound control on ${location.href}`
+    );
 
     const bootstrap = document.createElement('script');
     bootstrap.textContent = SYNC_BOOTSTRAP;
@@ -161,7 +189,10 @@
     const configEl = document.createElement('div');
     configEl.id = CONFIG_ID;
     configEl.hidden = true;
-    configEl.textContent = JSON.stringify({ urls });
+    configEl.textContent = JSON.stringify({
+      urls,
+      distractingSoundsUrl: chrome.runtime.getURL('blank.wav'),
+    });
     (document.documentElement || document.head || document).appendChild(configEl);
 
     const script = document.createElement('script');
@@ -178,32 +209,56 @@
   }
 
 
-  chrome.storage.local.get([SETTINGS_KEY], (result) => {
+  function readAssetSettings(raw) {
     let customModelsEnabled = true;
+    let disableDistractingSounds = false;
 
     try {
-      const raw = result[SETTINGS_KEY];
       if (raw) {
         const settings = typeof raw === 'string' ? JSON.parse(raw) : raw;
         if ('customModels' in settings) {
           customModelsEnabled = !!settings.customModels;
+        }
+        if ('disableDistractingSounds' in settings) {
+          disableDistractingSounds = !!settings.disableDistractingSounds;
         }
       }
     } catch (error) {
       console.warn(`${LOG} Failed to parse settings from storage:`, error);
     }
 
-    // 3. Decide whether to inject
-    if (!customModelsEnabled) {
-      console.log(`${LOG} Custom models are disabled in settings, skipping asset injection.`);
+    return { customModelsEnabled, disableDistractingSounds };
+  }
+
+  function applyAssetSettings(raw) {
+    const { customModelsEnabled, disableDistractingSounds } =
+      readAssetSettings(raw);
+
+    setDistractingSoundsDisabled(disableDistractingSounds);
+
+    if (!customModelsEnabled && !disableDistractingSounds) {
+      console.log(`${LOG} Asset overrides are disabled in settings.`);
       return;
     }
 
     if (document.documentElement) {
-      injectPageScript();
+      injectPageScript(customModelsEnabled, disableDistractingSounds);
     } else {
-        console.log(`${LOG} document.documentElement not ready, waiting for DOMContentLoaded...`);
-      document.addEventListener('DOMContentLoaded', injectPageScript, { once: true });
+      console.log(`${LOG} document.documentElement not ready, waiting for DOMContentLoaded...`);
+      document.addEventListener(
+        'DOMContentLoaded',
+        () => injectPageScript(customModelsEnabled, disableDistractingSounds),
+        { once: true }
+      );
     }
+  }
+
+  chrome.storage.local.get([SETTINGS_KEY], (result) => {
+    applyAssetSettings(result[SETTINGS_KEY]);
+  });
+
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local' || !changes[SETTINGS_KEY]) return;
+    applyAssetSettings(changes[SETTINGS_KEY].newValue);
   });
 })();

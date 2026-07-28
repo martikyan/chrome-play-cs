@@ -1,11 +1,16 @@
 (function () {
-  const LOG = '[CS Macro][Inject Models]';
+  const LOG = '[CS Macro][Inject Assets]';
   const CONFIG_ID = '__cs_ext_model_config__';
+  const DISTRACTING_SOUNDS_ATTRIBUTE = 'data-cs-ext-disable-distracting-sounds';
+  const DISTRACTING_SOUND_PATH =
+    /(?:^|\/)rodir\/valve\/misc\/[^/]+\.wav$/i;
 
   console.log(`${LOG} Page script started on ${location.href}`);
 
   const overrides = window.__csExtOverrides || new Map();
   window.__csExtOverrides = overrides;
+  window.__csExtDistractingSoundReplacement =
+    window.__csExtDistractingSoundReplacement || null;
   const hookStats = window.__csExtHookStats || {
     getItem: 0,
     getItemHit: 0,
@@ -43,6 +48,14 @@
 
       if (path.endsWith('.pict')) {
         path = path.slice(0, -5);
+      }
+
+      if (
+        document.documentElement?.getAttribute(DISTRACTING_SOUNDS_ATTRIBUTE) === 'true' &&
+        DISTRACTING_SOUND_PATH.test(path) &&
+        window.__csExtDistractingSoundReplacement
+      ) {
+        return window.__csExtDistractingSoundReplacement;
       }
 
       const currentOverrides = window.__csExtOverrides;
@@ -87,7 +100,10 @@
     }
     try {
       const config = JSON.parse(el.textContent);
-      console.log(`${LOG} Config loaded with ${Object.keys(config.urls || {}).length} URL(s).`);
+      console.log(
+        `${LOG} Config loaded with ${Object.keys(config.urls || {}).length} ` +
+        `model URL(s) and a distracting-sound replacement.`
+      );
       return config;
     } catch (error) {
       console.error(`${LOG} Failed to parse config JSON:`, error);
@@ -204,26 +220,60 @@
     const entries = Object.entries(config.urls || {});
     console.log(`${LOG} Fetching ${entries.length} model override(s)...`);
 
-    await Promise.all(
-      entries.map(async ([gameKey, url]) => {
-        try {
-          const response = await fetch(url);
-          if (!response.ok) {
-            console.error(`${LOG} Fetch failed for ${gameKey}: HTTP ${response.status} (${url})`);
-            return;
-          }
-          const buffer = await response.arrayBuffer();
-          registerOverride(gameKey, new Uint8Array(buffer));
-          console.log(`${LOG} Loaded override ${gameKey} (${buffer.byteLength} bytes)`);
-        } catch (error) {
-          console.error(`${LOG} Fetch error for ${gameKey} (${url}):`, error);
+    const modelLoads = entries.map(async ([gameKey, url]) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          console.error(`${LOG} Fetch failed for ${gameKey}: HTTP ${response.status} (${url})`);
+          return;
         }
-      }),
-    );
+        const buffer = await response.arrayBuffer();
+        registerOverride(gameKey, new Uint8Array(buffer));
+        console.log(`${LOG} Loaded override ${gameKey} (${buffer.byteLength} bytes)`);
+      } catch (error) {
+        console.error(`${LOG} Fetch error for ${gameKey} (${url}):`, error);
+      }
+    });
+
+    const distractingSoundLoad = (async () => {
+      if (!config.distractingSoundsUrl) return;
+
+      try {
+        const response = await fetch(config.distractingSoundsUrl);
+        if (!response.ok) {
+          console.error(
+            `${LOG} Failed to fetch distracting-sound replacement: ` +
+            `HTTP ${response.status} (${config.distractingSoundsUrl})`
+          );
+          return;
+        }
+        const buffer = await response.arrayBuffer();
+        window.__csExtDistractingSoundReplacement = new Uint8Array(buffer);
+        console.log(
+          `${LOG} Loaded distracting-sound replacement (${buffer.byteLength} bytes).`
+        );
+      } catch (error) {
+        console.error(
+          `${LOG} Failed to load distracting-sound replacement ` +
+          `(${config.distractingSoundsUrl}):`,
+          error
+        );
+      }
+    })();
+
+    await Promise.all([
+      ...modelLoads,
+      distractingSoundLoad,
+    ]);
 
     console.log(`${LOG} Override map size: ${overrides.size} path(s)`);
-    if (overrides.size === 0) {
-      console.error(`${LOG} No overrides loaded — check extension paths and web_accessible_resources.`);
+    if (
+      overrides.size === 0 &&
+      !window.__csExtDistractingSoundReplacement
+    ) {
+      console.error(
+        `${LOG} No overrides loaded — check extension paths and web_accessible_resources.`
+      );
     }
   }
 

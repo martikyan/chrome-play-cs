@@ -7,6 +7,7 @@ const DEFAULT_BRIGHTNESS = 100;
 const DEFAULT_CONTRAST = 100;
 const DEFAULT_SATURATION = 100;
 const DEFAULT_SOUND_WHEN_NOT_PLAYING = 100;
+const DEFAULT_DISABLE_DISTRACTING_SOUNDS = false;
 
 // These serve as the baseline templates for first-time loads
 const BINDING_TEMPLATES = [
@@ -31,6 +32,7 @@ function getDefaultSettings() {
     contrast: DEFAULT_CONTRAST,
     saturation: DEFAULT_SATURATION,
     soundWhenNotPlaying: DEFAULT_SOUND_WHEN_NOT_PLAYING,
+    disableDistractingSounds: DEFAULT_DISABLE_DISTRACTING_SOUNDS,
     doubleSpace: false,
     customModels: false,
     bindings,
@@ -93,6 +95,10 @@ function mergeSettings(stored) {
       ? stored.soundWhenNotPlaying
       : defaults.soundWhenNotPlaying;
 
+  const disableDistractingSounds = typeof stored.disableDistractingSounds === 'boolean'
+      ? stored.disableDistractingSounds
+      : defaults.disableDistractingSounds;
+
   const doubleSpace = typeof stored.doubleSpace === 'boolean'
       ? stored.doubleSpace
       : defaults.doubleSpace;
@@ -101,7 +107,20 @@ function mergeSettings(stored) {
       ? stored.customModels
       : defaults.customModels;
 
-  return { pointerSize, pointerThickness, pointerColor, brightness, contrast, saturation, soundWhenNotPlaying, doubleSpace, customModels, bindings, templates };
+  return {
+    pointerSize,
+    pointerThickness,
+    pointerColor,
+    brightness,
+    contrast,
+    saturation,
+    soundWhenNotPlaying,
+    disableDistractingSounds,
+    doubleSpace,
+    customModels,
+    bindings,
+    templates
+  };
 }
 
 function loadSettings() {

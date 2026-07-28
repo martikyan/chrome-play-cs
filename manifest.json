@@ -32,6 +32,7 @@
     {
       "resources": [
         "nintendo_switch.mp3",
+        "blank.wav",
         "asset-inject-page.js",
         "models/cstrike/models/player/arctic/arctic.mdl",
         "models/cstrike/models/player/gign/gign.mdl",
