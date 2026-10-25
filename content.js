@@ -46,7 +46,6 @@ let playerUsername = null;
 const activeBindingHandlers = [];
 let crosshairContainer = null;
 let doubleSpaceEnabled = false;
-let customModelsEnabled = false;
 let soundWhenNotPlaying = 100;
 let killSoundEnabled = true;
 let appliedGameSoundVolume = null;
@@ -123,7 +122,6 @@ function applySettings(settings) {
   applyPointerStyle(settings);
   applyDisplayFilters(settings);
   doubleSpaceEnabled = !!settings.doubleSpace;
-  customModelsEnabled = !!settings.customModels;
   soundWhenNotPlaying = settings.soundWhenNotPlaying;
   killSoundEnabled = settings.killSoundEnabled;
   updateGameSoundVolume();

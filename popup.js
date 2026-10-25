@@ -4,7 +4,6 @@ const thicknessInput = document.getElementById('popup-thickness');
 const thicknessVal = document.getElementById('thickness-val');
 const colorInput = document.getElementById('popup-color');
 const doubleSpaceInput = document.getElementById('popup-double-space');
-const fpsModelsInput = document.getElementById('popup-custom-models');
 const bindingsContainer = document.getElementById('bindings-container');
 
 const brightnessInput = document.getElementById('popup-brightness');
@@ -16,7 +15,6 @@ const saturationVal = document.getElementById('saturation-val');
 const soundWhenNotPlayingInput = document.getElementById('popup-sound-when-not-playing');
 const soundWhenNotPlayingVal = document.getElementById('sound-when-not-playing-val');
 const killSoundInput = document.getElementById('popup-kill-sound');
-const disableDistractingSoundsInput = document.getElementById('popup-disable-distracting-sounds');
 
 const customNameInput = document.getElementById('custom-name');
 const customSequenceInput = document.getElementById('custom-sequence');
@@ -85,7 +83,6 @@ async function initPopup() {
 
   colorInput.value = settings.pointerColor;
   doubleSpaceInput.checked = settings.doubleSpace || false;
-  fpsModelsInput.checked = settings.customModels || false;
 
   brightnessInput.value = settings.brightness;
   brightnessVal.textContent = settings.brightness;
@@ -99,7 +96,6 @@ async function initPopup() {
   soundWhenNotPlayingInput.value = settings.soundWhenNotPlaying;
   soundWhenNotPlayingVal.textContent = settings.soundWhenNotPlaying;
   killSoundInput.checked = settings.killSoundEnabled;
-  disableDistractingSoundsInput.checked = settings.disableDistractingSounds;
 
   const updateSettings = async () => {
     const currentSettings = await loadSettings(); 
@@ -108,14 +104,12 @@ async function initPopup() {
     currentSettings.pointerThickness = parseInt(thicknessInput.value, 10);
     currentSettings.pointerColor = colorInput.value;
     currentSettings.doubleSpace = doubleSpaceInput.checked;
-    currentSettings.customModels = fpsModelsInput.checked;
     
     currentSettings.brightness = parseInt(brightnessInput.value, 10);
     currentSettings.contrast = parseInt(contrastInput.value, 10);
     currentSettings.saturation = parseInt(saturationInput.value, 10);
     currentSettings.soundWhenNotPlaying = parseInt(soundWhenNotPlayingInput.value, 10);
     currentSettings.killSoundEnabled = killSoundInput.checked;
-    currentSettings.disableDistractingSounds = disableDistractingSoundsInput.checked;
 
     sizeVal.textContent = currentSettings.pointerSize;
     thicknessVal.textContent = currentSettings.pointerThickness;
@@ -131,14 +125,12 @@ async function initPopup() {
   thicknessInput.addEventListener('input', updateSettings);
   colorInput.addEventListener('input', updateSettings);
   doubleSpaceInput.addEventListener('change', updateSettings);
-  fpsModelsInput.addEventListener('change', updateSettings);
   
   brightnessInput.addEventListener('input', updateSettings);
   contrastInput.addEventListener('input', updateSettings);
   saturationInput.addEventListener('input', updateSettings);
   soundWhenNotPlayingInput.addEventListener('input', updateSettings);
   killSoundInput.addEventListener('change', updateSettings);
-  disableDistractingSoundsInput.addEventListener('change', updateSettings);
 
   await renderBindings();
 
