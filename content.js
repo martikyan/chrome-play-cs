@@ -48,6 +48,7 @@ let crosshairContainer = null;
 let doubleSpaceEnabled = false;
 let customModelsEnabled = false;
 let soundWhenNotPlaying = 100;
+let killSoundEnabled = true;
 let appliedGameSoundVolume = null;
 let gameAudioAvailableSince = null;
 let gameSoundControlEnabled = false;
@@ -124,6 +125,7 @@ function applySettings(settings) {
   doubleSpaceEnabled = !!settings.doubleSpace;
   customModelsEnabled = !!settings.customModels;
   soundWhenNotPlaying = settings.soundWhenNotPlaying;
+  killSoundEnabled = settings.killSoundEnabled;
   updateGameSoundVolume();
 }
 
@@ -350,7 +352,11 @@ function startObservingDeaths(deathFeedContainer) {
               const killerName = killerElement.textContent.trim();
               console.log(`[CS Macro] Found a killer: "${killerName}"`);
 
-              if (playerUsername && killerName.toLowerCase().includes(playerUsername.toLowerCase())) {
+              if (
+                killSoundEnabled &&
+                playerUsername &&
+                killerName.toLowerCase().includes(playerUsername.toLowerCase())
+              ) {
                 console.log(`[CS Macro] TARGET MATCHED: ${playerUsername}! Attempting to play sound...`);
 
                 killSound

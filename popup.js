@@ -15,6 +15,7 @@ const saturationInput = document.getElementById('popup-saturation');
 const saturationVal = document.getElementById('saturation-val');
 const soundWhenNotPlayingInput = document.getElementById('popup-sound-when-not-playing');
 const soundWhenNotPlayingVal = document.getElementById('sound-when-not-playing-val');
+const killSoundInput = document.getElementById('popup-kill-sound');
 const disableDistractingSoundsInput = document.getElementById('popup-disable-distracting-sounds');
 
 const customNameInput = document.getElementById('custom-name');
@@ -97,6 +98,7 @@ async function initPopup() {
 
   soundWhenNotPlayingInput.value = settings.soundWhenNotPlaying;
   soundWhenNotPlayingVal.textContent = settings.soundWhenNotPlaying;
+  killSoundInput.checked = settings.killSoundEnabled;
   disableDistractingSoundsInput.checked = settings.disableDistractingSounds;
 
   const updateSettings = async () => {
@@ -112,6 +114,7 @@ async function initPopup() {
     currentSettings.contrast = parseInt(contrastInput.value, 10);
     currentSettings.saturation = parseInt(saturationInput.value, 10);
     currentSettings.soundWhenNotPlaying = parseInt(soundWhenNotPlayingInput.value, 10);
+    currentSettings.killSoundEnabled = killSoundInput.checked;
     currentSettings.disableDistractingSounds = disableDistractingSoundsInput.checked;
 
     sizeVal.textContent = currentSettings.pointerSize;
@@ -134,6 +137,7 @@ async function initPopup() {
   contrastInput.addEventListener('input', updateSettings);
   saturationInput.addEventListener('input', updateSettings);
   soundWhenNotPlayingInput.addEventListener('input', updateSettings);
+  killSoundInput.addEventListener('change', updateSettings);
   disableDistractingSoundsInput.addEventListener('change', updateSettings);
 
   await renderBindings();

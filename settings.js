@@ -7,6 +7,7 @@ const DEFAULT_BRIGHTNESS = 100;
 const DEFAULT_CONTRAST = 100;
 const DEFAULT_SATURATION = 100;
 const DEFAULT_SOUND_WHEN_NOT_PLAYING = 100;
+const DEFAULT_KILL_SOUND_ENABLED = true;
 const DEFAULT_DISABLE_DISTRACTING_SOUNDS = false;
 
 // These serve as the baseline templates for first-time loads
@@ -32,6 +33,7 @@ function getDefaultSettings() {
     contrast: DEFAULT_CONTRAST,
     saturation: DEFAULT_SATURATION,
     soundWhenNotPlaying: DEFAULT_SOUND_WHEN_NOT_PLAYING,
+    killSoundEnabled: DEFAULT_KILL_SOUND_ENABLED,
     disableDistractingSounds: DEFAULT_DISABLE_DISTRACTING_SOUNDS,
     doubleSpace: false,
     customModels: false,
@@ -95,6 +97,10 @@ function mergeSettings(stored) {
       ? stored.soundWhenNotPlaying
       : defaults.soundWhenNotPlaying;
 
+  const killSoundEnabled = typeof stored.killSoundEnabled === 'boolean'
+      ? stored.killSoundEnabled
+      : defaults.killSoundEnabled;
+
   const disableDistractingSounds = typeof stored.disableDistractingSounds === 'boolean'
       ? stored.disableDistractingSounds
       : defaults.disableDistractingSounds;
@@ -115,6 +121,7 @@ function mergeSettings(stored) {
     contrast,
     saturation,
     soundWhenNotPlaying,
+    killSoundEnabled,
     disableDistractingSounds,
     doubleSpace,
     customModels,
