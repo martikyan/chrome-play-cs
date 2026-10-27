@@ -1,38 +1,16 @@
-/**
- * Binds a specific trigger key to a sequence of characters.
- */
-function BindKeys(triggerKey, sequenceStr, delayMs = 35) {
+function sendNativeCommand(command, payload = {}) {
+  return new Promise((resolve) => {
+    return; // todo: temporarily disable native commands
+  });
+}
+
+function BindKeys(triggerKey, sequenceStr) {
   const handler = (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
-    if (e.key === triggerKey) {
+    if (e.isTrusted && e.key === triggerKey) {
       e.preventDefault();
-      [...sequenceStr].forEach((char, i) => {
-        setTimeout(() => {
-          const el = document.activeElement || document.body;
-          const isDigit = /\d/.test(char);
-          const eventData = {
-            key: char,
-            code: isDigit ? `Digit${char}` : `Key${char.toUpperCase()}`,
-            keyCode: char.toUpperCase().charCodeAt(0),
-            bubbles: true,
-            cancelable: true,
-            view: window,
-          };
-
-          el.dispatchEvent(new KeyboardEvent('keydown', eventData));
-
-          if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-            const start = el.selectionStart;
-            const end = el.selectionEnd;
-            const text = el.value;
-            el.value = text.slice(0, start) + char + text.slice(end);
-            el.setSelectionRange(start + 1, start + 1);
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-          }
-          el.dispatchEvent(new KeyboardEvent('keyup', eventData));
-        }, i * delayMs);
-      });
+      void sendNativeCommand('type', { text: sequenceStr });
     }
   };
 
@@ -46,19 +24,18 @@ let playerUsername = null;
 const activeBindingHandlers = [];
 let crosshairContainer = null;
 let doubleSpaceEnabled = false;
-let soundWhenNotPlaying = 100;
+let muteTabWhenNotPlaying = false;
 let killSoundEnabled = true;
-let appliedGameSoundVolume = null;
 let gameAudioAvailableSince = null;
-let gameSoundControlEnabled = false;
 let notPlayingSince = null;
 let soundLowerTimer = null;
+let lastNativeSpaceDispatchAt = 0;
+let gameTabMuted = false;
+let tabMuteRequestInFlight = false;
 
 const GAME_AUDIO_READY_DELAY_MS = 1000;
 const SOUND_LOWER_DELAY_MS = 2000;
-const GAME_SOUND_ENABLED_ATTRIBUTE = 'data-cs-macro-game-sound-enabled';
-const GAME_SOUND_VOLUME_ATTRIBUTE = 'data-cs-macro-game-sound-volume';
-const GAME_SOUND_VOLUME_EVENT = '__csMacroGameSoundVolumeChanged';
+const NATIVE_SPACE_COOLDOWN_MS = 150;
 
 function clearBindings() {
   for (const handler of activeBindingHandlers) {
@@ -122,9 +99,9 @@ function applySettings(settings) {
   applyPointerStyle(settings);
   applyDisplayFilters(settings);
   doubleSpaceEnabled = !!settings.doubleSpace;
-  soundWhenNotPlaying = settings.soundWhenNotPlaying;
+  muteTabWhenNotPlaying = settings.muteTabWhenNotPlaying;
   killSoundEnabled = settings.killSoundEnabled;
-  updateGameSoundVolume();
+  updateGameTabMuteState();
 }
 
 function createCenterPointer() {
@@ -207,6 +184,9 @@ async function initExtension() {
   createCenterPointer();
   const settings = await loadSettings();
   applySettings(settings);
+  // Open the native port before a player presses a macro key. This keeps the
+  // first physical dispatch off the cold-start path.
+  void sendNativeCommand('status');
 }
 
 initExtension();
@@ -263,19 +243,7 @@ function updateCrosshairVisibility(gameAvailable) {
   crosshairContainer.style.display = display;
 }
 
-function publishGameSoundState(enabled, volumePercent) {
-  document.documentElement.setAttribute(
-    GAME_SOUND_ENABLED_ATTRIBUTE,
-    String(enabled)
-  );
-  document.documentElement.setAttribute(
-    GAME_SOUND_VOLUME_ATTRIBUTE,
-    String(volumePercent)
-  );
-  document.dispatchEvent(new Event(GAME_SOUND_VOLUME_EVENT));
-}
-
-function updateGameSoundVolume() {
+function updateGameTabMuteState() {
   const gameAvailable = isGameAvailable();
   updateCrosshairVisibility(gameAvailable);
 
@@ -284,13 +252,8 @@ function updateGameSoundVolume() {
     notPlayingSince = null;
     clearTimeout(soundLowerTimer);
     soundLowerTimer = null;
+    void setGameTabMuted(false);
 
-    if (gameSoundControlEnabled) {
-      gameSoundControlEnabled = false;
-      appliedGameSoundVolume = null;
-      publishGameSoundState(false, 100);
-      console.log('[CS Macro] Game unavailable; game sound control disabled.');
-    }
     return;
   }
 
@@ -310,7 +273,7 @@ function updateGameSoundVolume() {
     notPlayingSince = Date.now();
     soundLowerTimer = setTimeout(() => {
       soundLowerTimer = null;
-      updateGameSoundVolume();
+      updateGameTabMuteState();
     }, SOUND_LOWER_DELAY_MS);
     return;
   } else if (Date.now() - notPlayingSince < SOUND_LOWER_DELAY_MS) {
@@ -320,16 +283,31 @@ function updateGameSoundVolume() {
     soundLowerTimer = null;
   }
 
-  const volumePercent = playing ? 100 : soundWhenNotPlaying;
-  if (gameSoundControlEnabled && volumePercent === appliedGameSoundVolume) return;
-
-  gameSoundControlEnabled = true;
-  appliedGameSoundVolume = volumePercent;
-  publishGameSoundState(true, volumePercent);
-  console.log(`[CS Macro] Game sound volume set to ${volumePercent}%.`);
+  if (playing) {
+    void setGameTabMuted(false);
+  } else {
+    void setGameTabMuted(muteTabWhenNotPlaying);
+  }
 }
 
-setInterval(updateGameSoundVolume, 250);
+async function setGameTabMuted(muted) {
+  if (tabMuteRequestInFlight || gameTabMuted === muted) return;
+
+  tabMuteRequestInFlight = true;
+  const response = await new Promise((resolve) => {
+    chrome.runtime.sendMessage({ command: 'set_tab_muted', muted }, resolve);
+  });
+  tabMuteRequestInFlight = false;
+
+  if (!response?.ok) {
+    console.error('[CS Macro] Could not update tab mute state:', response?.error || 'Unknown error');
+    return;
+  }
+  gameTabMuted = muted;
+  console.log(`[CS Macro] Game tab ${muted ? 'muted' : 'unmuted'}.`);
+}
+
+setInterval(updateGameTabMuteState, 250);
 
 function startObservingDeaths(deathFeedContainer) {
   console.log('[CS Macro] Observer started on container:', deathFeedContainer);
@@ -437,23 +415,16 @@ document.addEventListener('keydown', async (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
   if (e.key === ' ' || e.code === 'Space') {
-    const el = document.activeElement || document.body;
-    const spaceEventData = {
-      key: ' ',            
-      code: 'Space',       
-      keyCode: 32,         
-      which: 32,           
-      bubbles: true,       
-      cancelable: true,    
-      composed: true       
-    };
+    if (Date.now() - lastNativeSpaceDispatchAt < NATIVE_SPACE_COOLDOWN_MS) {
+      console.log('[CS Macro] Ignoring simulated space during native dispatch cooldown.');
+      return;
+    }
 
-    console.log('Dispatching space')
-    // Safely dispatch macro commands directly onto target focus elements
+    console.log('[CS Macro] Dispatching second physical space.');
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     await sleep(30);
-    el.dispatchEvent(new KeyboardEvent('keydown', spaceEventData));
-    el.dispatchEvent(new KeyboardEvent('keyup', spaceEventData));
+    lastNativeSpaceDispatchAt = Date.now();
+    await sendNativeCommand('press_space');
   }
 });

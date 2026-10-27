@@ -12,14 +12,26 @@ const contrastInput = document.getElementById('popup-contrast');
 const contrastVal = document.getElementById('contrast-val');
 const saturationInput = document.getElementById('popup-saturation');
 const saturationVal = document.getElementById('saturation-val');
-const soundWhenNotPlayingInput = document.getElementById('popup-sound-when-not-playing');
-const soundWhenNotPlayingVal = document.getElementById('sound-when-not-playing-val');
+const muteTabWhenNotPlayingInput = document.getElementById('popup-mute-tab-when-not-playing');
 const killSoundInput = document.getElementById('popup-kill-sound');
 
 const customNameInput = document.getElementById('custom-name');
 const customSequenceInput = document.getElementById('custom-sequence');
 const customTriggerInput = document.getElementById('custom-trigger');
 const addBindingBtn = document.getElementById('add-binding-btn');
+const helperStatus = document.getElementById('helper-status');
+
+function updateHelperStatus() {
+  chrome.runtime.sendMessage({ command: 'status' }, (response) => {
+    if (chrome.runtime.lastError || !response?.ok) {
+      helperStatus.className = 'helper-status error';
+      helperStatus.textContent = 'Native helper unavailable. Run scripts/install-native-host.sh, then reload the extension.';
+      return;
+    }
+    helperStatus.className = 'helper-status ok';
+    helperStatus.textContent = 'Native helper connected.';
+  });
+}
 
 async function renderBindings() {
   bindingsContainer.innerHTML = '';
@@ -73,6 +85,7 @@ async function renderBindings() {
 }
 
 async function initPopup() {
+  updateHelperStatus();
   const settings = await loadSettings();
 
   sizeInput.value = settings.pointerSize;
@@ -93,8 +106,7 @@ async function initPopup() {
   saturationInput.value = settings.saturation;
   saturationVal.textContent = settings.saturation;
 
-  soundWhenNotPlayingInput.value = settings.soundWhenNotPlaying;
-  soundWhenNotPlayingVal.textContent = settings.soundWhenNotPlaying;
+  muteTabWhenNotPlayingInput.checked = settings.muteTabWhenNotPlaying;
   killSoundInput.checked = settings.killSoundEnabled;
 
   const updateSettings = async () => {
@@ -108,7 +120,7 @@ async function initPopup() {
     currentSettings.brightness = parseInt(brightnessInput.value, 10);
     currentSettings.contrast = parseInt(contrastInput.value, 10);
     currentSettings.saturation = parseInt(saturationInput.value, 10);
-    currentSettings.soundWhenNotPlaying = parseInt(soundWhenNotPlayingInput.value, 10);
+    currentSettings.muteTabWhenNotPlaying = muteTabWhenNotPlayingInput.checked;
     currentSettings.killSoundEnabled = killSoundInput.checked;
 
     sizeVal.textContent = currentSettings.pointerSize;
@@ -116,7 +128,6 @@ async function initPopup() {
     brightnessVal.textContent = currentSettings.brightness;
     contrastVal.textContent = currentSettings.contrast;
     saturationVal.textContent = currentSettings.saturation;
-    soundWhenNotPlayingVal.textContent = currentSettings.soundWhenNotPlaying;
 
     await saveSettings(currentSettings);
   };
@@ -129,7 +140,7 @@ async function initPopup() {
   brightnessInput.addEventListener('input', updateSettings);
   contrastInput.addEventListener('input', updateSettings);
   saturationInput.addEventListener('input', updateSettings);
-  soundWhenNotPlayingInput.addEventListener('input', updateSettings);
+  muteTabWhenNotPlayingInput.addEventListener('change', updateSettings);
   killSoundInput.addEventListener('change', updateSettings);
 
   await renderBindings();

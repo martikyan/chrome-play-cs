@@ -25,6 +25,10 @@ Since this extension is currently not on the Chrome Web Store, you will need to 
    Toggle the **Developer mode** switch in the top-right corner of the page to **ON**.
 5. **Load the extension:**
    Click the **Load unpacked** button in the top-left corner, select the extracted folder (the folder containing the `manifest.json` file), and click **Open**.
+6. **Install the native helper:**
+   From the extracted folder, run `scripts/install-native-host.sh`. The installer asks for the extension ID, builds the helper once, and registers it with Chrome. The ID is shown on the extension’s card at `chrome://extensions` when Developer mode is enabled.
+
+The helper is required for key bindings and double-space. Its log is written to `~/Library/Logs/CSPlayNativeHost/service.log`. If physical keystrokes are blocked, grant the helper the accessibility/automation permission requested by the system, then reload the extension.
 
 ---
 

@@ -6,7 +6,7 @@ const DEFAULT_POINTER_COLOR = '#8b0000';
 const DEFAULT_BRIGHTNESS = 100;
 const DEFAULT_CONTRAST = 100;
 const DEFAULT_SATURATION = 100;
-const DEFAULT_SOUND_WHEN_NOT_PLAYING = 100;
+const DEFAULT_MUTE_TAB_WHEN_NOT_PLAYING = false;
 const DEFAULT_KILL_SOUND_ENABLED = true;
 
 // These serve as the baseline templates for first-time loads
@@ -31,7 +31,7 @@ function getDefaultSettings() {
     brightness: DEFAULT_BRIGHTNESS,
     contrast: DEFAULT_CONTRAST,
     saturation: DEFAULT_SATURATION,
-    soundWhenNotPlaying: DEFAULT_SOUND_WHEN_NOT_PLAYING,
+    muteTabWhenNotPlaying: DEFAULT_MUTE_TAB_WHEN_NOT_PLAYING,
     killSoundEnabled: DEFAULT_KILL_SOUND_ENABLED,
     doubleSpace: false,
     bindings,
@@ -89,10 +89,9 @@ function mergeSettings(stored) {
       ? stored.saturation 
       : defaults.saturation;
 
-  const soundWhenNotPlaying = typeof stored.soundWhenNotPlaying === 'number' &&
-      stored.soundWhenNotPlaying >= 0 && stored.soundWhenNotPlaying <= 100
-      ? stored.soundWhenNotPlaying
-      : defaults.soundWhenNotPlaying;
+  const muteTabWhenNotPlaying = typeof stored.muteTabWhenNotPlaying === 'boolean'
+      ? stored.muteTabWhenNotPlaying
+      : defaults.muteTabWhenNotPlaying;
 
   const killSoundEnabled = typeof stored.killSoundEnabled === 'boolean'
       ? stored.killSoundEnabled
@@ -109,7 +108,7 @@ function mergeSettings(stored) {
     brightness,
     contrast,
     saturation,
-    soundWhenNotPlaying,
+    muteTabWhenNotPlaying,
     killSoundEnabled,
     doubleSpace,
     bindings,
